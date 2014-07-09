@@ -1,0 +1,28 @@
+<launch>
+
+  <arg name="map_file" value="$(find simple_nav)/map/simple_map.yaml"/>
+    <node pkg="map_server" type="map_server" name="map" output="screen" args="$(arg map_file)">
+  </node>
+
+  <node pkg="amcl" type="amcl" name="localizer" output="screen">
+    <remap from="scan" to="base_scan" />
+  </node>
+
+<!--   <node pkg="costmap_2d" type="costmap_2d_node" name="costmap_node" output="screen">
+   <rosparam file="$(find simple_nav)/launch/plugins.yaml" command="load" ns="/costmap_node/global_costmap" />
+  </node> -->
+
+  <node pkg="move_base" type="move_base" respawn="false" name="mover" output="screen">
+    <rosparam file="$(find simple_nav)/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />
+    <rosparam file="$(find simple_nav)/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
+    <rosparam file="$(find simple_nav)/launch/local_costmap_params.yaml" command="load" />
+    <rosparam file="$(find simple_nav)/launch/global_costmap_params.yaml" command="load" />
+    <rosparam file="$(find simple_nav)/launch/base_local_planner_params.yaml" command="load" />
+    <rosparam file="$(find simple_nav)/launch/plugins.yaml" command="load" ns="/mover/global_costmap" />
+  </node>
+
+<!--   <node name="static_tf0" pkg="tf" type="static_transform_publisher" args="2 0 0 0 0 0 /map /base_link 100">
+    <rosparam file="$(find simple_nav)/launch/plugins.yaml" command="load" ns="/costmap_node/costmap" />
+  </node>
+ -->
+</launch>
