@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	dynamic_reconfigure
 	pluginlib
+  # opencv2 REQUIRED
 )
 
 ## System dependencies are found with CMake's conventions
@@ -120,18 +121,18 @@ add_library(breadcrumb_layer
 # add_dependencies(simple_nav_node simple_nav_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(simple_layer
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(grid_layer
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(tracking_layer
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(breadcrumb_layer
-  ${catkin_LIBRARIES}
-)
+# target_link_libraries(simple_layer
+#   ${catkin_LIBRARIES}
+# )
+# target_link_libraries(grid_layer
+#   ${catkin_LIBRARIES}
+# )
+# target_link_libraries(tracking_layer
+#    ${opencv2_LIBS}
+# )
+# target_link_libraries(breadcrumb_layer
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##

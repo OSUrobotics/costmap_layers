@@ -6,6 +6,7 @@
 #include <costmap_2d/GenericPluginConfig.h>
 #include <dynamic_reconfigure/server.h>
 #include <opencv2/core/core.hpp>
+#include <vector>
 
 using cv::Mat;
 
@@ -32,6 +33,7 @@ private:
 	void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
 	dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
 	cv::Mat map_img;
+	std::vector< std::vector<long> > grid;
 };
 }
 #endif

@@ -1,6 +1,8 @@
 #include "tracking_layer.h"
 #include <pluginlib/class_list_macros.h>
+#include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/highgui/highgui.hpp"
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::TrackingLayer, costmap_2d::Layer)
 
@@ -16,20 +18,13 @@ void TrackingLayer::onInitialize()
 {
 	ros::NodeHandle nh("~/" + name_);
 	current_ = true;
-	default_value_ = 10;
+	default_value_ = 100;
 	matchSize();
 
 	dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
 	dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
 			&TrackingLayer::reconfigureCB, this, _1, _2);
 	dsrv_->setCallback(cb);
-
-	// make our layer into an img so we can do things to it.
-	// Mat temp_img(getSizeInCellsX(), getSizeInCellsY(), CV_8U, costmap_);
-	// temp_img.copyTo(map_img);
-	map_img = Mat(5, 5, CV_8U);
-
-
 }
 
 
@@ -52,20 +47,21 @@ void TrackingLayer::updateBounds(double origin_x, double origin_y, double origin
 	if (!enabled_)
 		return;
 
-	double mark_x = origin_x + cos(origin_yaw), mark_y = origin_y + sin(origin_yaw);
-	unsigned int mx;
-	unsigned int my;
-	// if(worldToMap(mark_x, mark_y, mx, my)){
-	// 	setCost(mx, my, 5);
-	// }
+	unsigned int mx, my;
+
 	if(worldToMap(origin_x, origin_y, mx, my)){
-		setCost(mx, my, 0);
+		// setCost(mx, my, 0);
+		for(int i = mx - 2; i <= mx + 2; i++) {
+			for(int j = my - 2; j <= my + 2; j++) {
+				setCost(i, j, 0);
+			}
+		}
 	}
 	
-	*min_x = std::min(*min_x, mark_x);
-	*min_y = std::min(*min_y, mark_y);
-	*max_x = std::max(*max_x, mark_x);
-	*max_y = std::max(*max_y, mark_y);
+	// *min_x = std::min(*min_x, mark_x);
+	// *min_y = std::min(*min_y, mark_y);
+	// *max_x = std::max(*max_x, mark_x);
+	// *max_y = std::max(*max_y, mark_y);
 
 	*min_x = std::min(*min_x, origin_x);
 	*min_y = std::min(*min_y, origin_y);
@@ -76,8 +72,7 @@ void TrackingLayer::updateBounds(double origin_x, double origin_y, double origin
 void TrackingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
 																					int max_j)
 {
-	// ROS_INFO("tracking_layer[0][0] = %d", map_img.at<int>(0, 0));
-	ROS_INFO("ros works okay");
+
 
 	if (!enabled_)
 		return;
@@ -87,7 +82,7 @@ void TrackingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
 		for (int i = min_i; i < max_i; i++)
 		{
 			int index = getIndex(i, j);
-			if (master_grid.getCost(i, j) >= 100)
+			if (master_grid.getCost(i, j) >= 253)
 				continue;
 			master_grid.setCost(i, j, costmap_[index]);
 		}
