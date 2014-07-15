@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
 	roscpp
 	dynamic_reconfigure
 	pluginlib
+  std_srvs
   # opencv2 REQUIRED
 )
 

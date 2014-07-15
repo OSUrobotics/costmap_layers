@@ -3,6 +3,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "opencv2/highgui/highgui.hpp"
+#include <string>
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::TrackingLayer, costmap_2d::Layer)
 
@@ -25,6 +26,8 @@ void TrackingLayer::onInitialize()
 	dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb = boost::bind(
 			&TrackingLayer::reconfigureCB, this, _1, _2);
 	dsrv_->setCallback(cb);
+
+	ROS_INFO("TRACKING LAYER GLOBAL FRAME: %s", (layered_costmap_->getGlobalFrameID()).c_str() );
 }
 
 
@@ -57,11 +60,6 @@ void TrackingLayer::updateBounds(double origin_x, double origin_y, double origin
 			}
 		}
 	}
-	
-	// *min_x = std::min(*min_x, mark_x);
-	// *min_y = std::min(*min_y, mark_y);
-	// *max_x = std::max(*max_x, mark_x);
-	// *max_y = std::max(*max_y, mark_y);
 
 	*min_x = std::min(*min_x, origin_x);
 	*min_y = std::min(*min_y, origin_y);
@@ -82,7 +80,7 @@ void TrackingLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, i
 		for (int i = min_i; i < max_i; i++)
 		{
 			int index = getIndex(i, j);
-			if (master_grid.getCost(i, j) >= 253)
+			if (master_grid.getCost(i, j) >= 100)
 				continue;
 			master_grid.setCost(i, j, costmap_[index]);
 		}
