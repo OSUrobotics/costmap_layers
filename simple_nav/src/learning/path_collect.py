@@ -58,6 +58,10 @@ class PathRecorder():
 		elif self.state == 'RECORDING':
 			self.state = 'SAVING'
 
+			print "Path length:", len(self.path)
+			self.path = []
+			self.state = 'IDLE'
+
 		elif self.state == 'SAVING':
 			pass
 
@@ -82,13 +86,7 @@ class PathRecorder():
 			self.transformer.waitForTransform(pt.header.frame_id, self.map_frame, rospy.Time.now(), rospy.Duration(2.0))
 			pt = self.transformer.transformPoint(self.map_frame, pt)
 
-			print pt
-			print
-
-
-		
-		elif self.state == 'RECORDING':
-			self.state = 'SAVING'
+			self.path.append(pt.point)
 
 		elif self.state == 'SAVING':
 			pass
