@@ -9,7 +9,7 @@ from geometry_msgs.msg import PointStamped
 import rospy
 import tf
 # External Libraries
-from time import sleep
+import json
 
 
 
@@ -42,7 +42,11 @@ class PathRecorder():
 		# User guidance
 		rospy.loginfo("Send an Empty srv to start or stop recording data.")
 
-		self.path = []
+		self.path_data = {
+			'width': self.map_metadata.width,
+			'height': self.map_metadata.height,
+			'path': []
+		}
 		self.state = 'IDLE'
 		rospy.spin()
 
@@ -59,9 +63,10 @@ class PathRecorder():
 			self.state = 'SAVING'
 
 			self.save()
+			# print self.path_data
+			self.path_data['path'] = []
 
-			print "Path length:", len(self.path)
-			self.path = []
+			
 			self.state = 'IDLE'
 
 		elif self.state == 'SAVING':
@@ -73,8 +78,9 @@ class PathRecorder():
 
 
 	def save(self):
-		print self.path
-		print self.map_metadata
+		with open('workfile', 'w') as outfile:
+			json.dump(self.path_data, outfile)
+			print "Path data saved to workfile"
 
 
 	def position_callback(self, odom):
@@ -92,8 +98,10 @@ class PathRecorder():
 			# transform point
 			self.transformer.waitForTransform(pt.header.frame_id, self.map_frame, rospy.Time.now(), rospy.Duration(2.0))
 			pt = self.transformer.transformPoint(self.map_frame, pt)
+			i = int((pt.point.x - self.map_metadata.origin.position.x) / self.map_metadata.resolution)
+			j = int((pt.point.y - self.map_metadata.origin.position.y) / self.map_metadata.resolution)
 
-			self.path.append(pt.point)
+			self.path_data['path'].append([i, j])
 
 		elif self.state == 'SAVING':
 			pass
