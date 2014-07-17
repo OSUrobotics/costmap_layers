@@ -3,6 +3,8 @@
   <arg name="world_file" value="$(find simple_nav)/world/simple.world"/>
   <node pkg="stage_ros" type="stageros" name="simulator" output="screen" args="$(arg world_file)"/>
 
-  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="teleop" output="screen" />
+  <arg name="map_file" value="$(find simple_nav)/map/simple_map.yaml"/>
+    <node pkg="map_server" type="map_server" name="map" output="screen" args="$(arg map_file)">
+  </node>
 
 </launch>

@@ -47,7 +47,6 @@
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>opencv2</build_depend>
   <build_depend>std_srvs</build_depend>
-  <build_depend>rospy</build_depend>
 
 <!--   <run_depend>move_base</run_depend>
   <run_depend>stage_ros</run_depend>

@@ -58,6 +58,8 @@ class PathRecorder():
 		elif self.state == 'RECORDING':
 			self.state = 'SAVING'
 
+			self.save()
+
 			print "Path length:", len(self.path)
 			self.path = []
 			self.state = 'IDLE'
@@ -68,6 +70,11 @@ class PathRecorder():
 		info = "State: " + self.state
 		rospy.loginfo(info)
 		return []
+
+
+	def save(self):
+		print self.path
+		print self.map_metadata
 
 
 	def position_callback(self, odom):
