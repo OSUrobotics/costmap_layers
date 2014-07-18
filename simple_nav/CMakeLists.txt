@@ -113,6 +113,9 @@ add_library(tracking_layer
 add_library(breadcrumb_layer
   src/breadcrumb_layer/breadcrumb_layer.cpp
 )
+add_library(learned_layer
+  src/learned_layer/learned_layer.cpp
+)
 
 ## Declare a cpp executable
 # add_executable(costmap_loader src/useless.cpp)
