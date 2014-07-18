@@ -32,7 +32,7 @@ class PathAnalyzer():
 			self.min_j = min(self.min_j, j)
 			self.max_i = max(self.max_i, i)
 			self.max_j = max(self.max_j, j)
-			self.costmap[i, j] = 255
+			self.costmap[i, j] = 100
 
 		self.min_i -= 100
 		self.max_i += 100
@@ -45,6 +45,7 @@ class PathAnalyzer():
 		self.costmap = cv2.GaussianBlur(self.costmap, (11,11), 0)
 
 		# cv2.imshow('image', cv2.resize(self.costmap, (800, 800)))
+		self.costmap = 100 - self.costmap
 		cv2.imshow('image', self.costmap[self.min_i:self.max_i, self.min_j:self.max_j])
 		cv2.waitKey(0)
 		cv2.destroyAllWindows()
@@ -64,6 +65,7 @@ class PathAnalyzer():
 
 if __name__ == '__main__':
 	p = PathAnalyzer()
-	p.load('workfile')
+	# TODO: SEE IF THIS WORKS
+	p.load('/nfs/attic/smartw/users/lafortuj/workfile')
 	p.analyze()
 	p.save()

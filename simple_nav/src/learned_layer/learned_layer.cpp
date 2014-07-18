@@ -1,5 +1,8 @@
 #include "learned_layer.h"
 #include <pluginlib/class_list_macros.h>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::LearnedLayer, costmap_2d::Layer)
 
@@ -23,8 +26,39 @@ void LearnedLayer::onInitialize()
 			&LearnedLayer::reconfigureCB, this, _1, _2);
 	dsrv_->setCallback(cb);
 
-	setCost(2269, 1985, LETHAL_OBSTACLE);
+	load();
 
+	// setCost(2269, 1985, LETHAL_OBSTACLE);
+
+}
+
+void LearnedLayer::load() {
+	std::fstream infile("/nfs/attic/smartw/users/lafortuj/catkin_ws/src/simple_nav/src/learning/costmap.txt");
+	std::string line;
+
+	std::getline(infile, line);
+	std::istringstream iss(line);
+	
+	unsigned int min_i, min_j, max_j, max_i;
+
+	iss >> min_i >> max_i >> min_j >> max_j;
+
+	// std::cout << min_i << " " << max_i << " " << min_j << " " << max_j << "\n";
+
+	unsigned int i = min_i;
+	while(std::getline(infile, line)) {
+		std::istringstream instream(line);
+
+		// std::cout << line;
+
+		unsigned int n, j = min_j;
+		while (instream >> n) {
+			setCost(i, j, n);
+			// std::cout << i << " " << j << " " << n << "\n";
+			j++;
+		}
+		i++;
+	}
 }
 
 
@@ -51,13 +85,12 @@ void LearnedLayer::updateBounds(double origin_x, double origin_y, double origin_
 
 
 
-	// *min_x = std::min(*min_x, origin_x);
-	// *min_y = std::min(*min_y, origin_y);
-	// *max_x = std::max(*max_x, origin_x);
-	// *max_y = std::max(*max_y, origin_y);
+	*min_x = std::min(*min_x, origin_x - 10);
+	*min_y = std::min(*min_y, origin_y - 10);
+	*max_x = std::max(*max_x, origin_x + 10);
+	*max_y = std::max(*max_y, origin_y + 10);
 
 
-	// unsigned int mx, my;
 
 	// if(worldToMap(origin_x, origin_y, mx, my)){
 	// 	// setCost(mx, my, 0);

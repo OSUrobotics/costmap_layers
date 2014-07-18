@@ -9,25 +9,27 @@
 namespace simple_layer_namespace
 {
 
-class LearnedLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
-{
-public:
-	LearnedLayer();
-
-	virtual void onInitialize();
-	virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
-														 double* max_y);
-	virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
-	bool isDiscretized()
+	class LearnedLayer : public costmap_2d::Layer, public costmap_2d::Costmap2D
 	{
-		return true;
-	}
+	public:
+		LearnedLayer();
 
-	virtual void matchSize();
+		virtual void onInitialize();
+		virtual void updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x, double* min_y, double* max_x,
+															 double* max_y);
+		virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+		bool isDiscretized()
+		{
+			return true;
+		}
 
-private:
-	void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-	dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
-};
+		virtual void matchSize();
+
+		virtual void load();
+
+	private:
+		void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
+		dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
+	};
 }
 #endif
