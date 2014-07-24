@@ -65,7 +65,6 @@ class PathAnalyzer():
 
 if __name__ == '__main__':
 	p = PathAnalyzer()
-	# TODO: SEE IF THIS WORKS
 	p.load('/nfs/attic/smartw/users/lafortuj/workfile')
 	p.analyze()
 	p.save()

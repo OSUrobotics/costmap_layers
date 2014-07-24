@@ -1,0 +1,4 @@
+#request
+string action
+---
+bool success

@@ -13,4 +13,6 @@
     <rosparam file="$(find simple_nav)/launch/plugins.yaml" command="load" ns="/mover/global_costmap" />
   </node>
 
+  <!-- <node pkg="simple_nav" type="path_collect.py" name="path_collector" output="screen"/> -->
+
 </launch>
