@@ -17,6 +17,7 @@ LearnedLayer::LearnedLayer() {}
 void LearnedLayer::onInitialize()
 {
 	ros::NodeHandle nh("~/" + name_);
+	// ros::ServiceClient client = nh.serviceClient<my_package::Foo>("my_service_name");
 	current_ = true;
 	default_value_ = 100;
 	matchSize();
@@ -33,32 +34,7 @@ void LearnedLayer::onInitialize()
 }
 
 void LearnedLayer::load() {
-	std::fstream infile("/nfs/attic/smartw/users/lafortuj/catkin_ws/src/simple_nav/src/learning/costmap.txt");
-	std::string line;
-
-	std::getline(infile, line);
-	std::istringstream iss(line);
 	
-	unsigned int min_i, min_j, max_j, max_i;
-
-	iss >> min_i >> max_i >> min_j >> max_j;
-
-	// std::cout << min_i << " " << max_i << " " << min_j << " " << max_j << "\n";
-
-	unsigned int i = min_i;
-	while(std::getline(infile, line)) {
-		std::istringstream instream(line);
-
-		// std::cout << line;
-
-		unsigned int n, j = min_j;
-		while (instream >> n) {
-			setCost(i, j, n);
-			// std::cout << i << " " << j << " " << n << "\n";
-			j++;
-		}
-		i++;
-	}
 }
 
 
