@@ -1,0 +1,7 @@
+<launch>
+
+  <include file="$(find simple_nav)/launch/simulator.launch" />
+
+  <include file="$(find simple_nav)/launch/teleop_joy.launch" />
+
+</launch>

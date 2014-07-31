@@ -1,5 +1,7 @@
 <launch>
 
+  <node pkg="simple_nav" type="analyze_path.py" name="path_collector" output="screen"/>
+
   <node pkg="amcl" type="amcl" name="localizer" output="screen">
     <remap from="scan" to="base_scan" />
   </node>
@@ -12,7 +14,5 @@
     <rosparam file="$(find simple_nav)/launch/base_local_planner_params.yaml" command="load" />
     <rosparam file="$(find simple_nav)/launch/plugins.yaml" command="load" ns="/mover/global_costmap" />
   </node>
-
-  <!-- <node pkg="simple_nav" type="path_collect.py" name="path_collector" output="screen"/> -->
 
 </launch>

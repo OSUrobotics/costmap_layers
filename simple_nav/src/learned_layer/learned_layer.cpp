@@ -1,8 +1,7 @@
 #include "learned_layer.h"
 #include <pluginlib/class_list_macros.h>
-#include <fstream>
-#include <string>
-#include <sstream>
+#include <iostream>
+
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::LearnedLayer, costmap_2d::Layer)
 
@@ -16,10 +15,13 @@ LearnedLayer::LearnedLayer() {}
 
 void LearnedLayer::onInitialize()
 {
-	ros::NodeHandle nh("~/" + name_);
-	// ros::ServiceClient client = nh.serviceClient<my_package::Foo>("my_service_name");
+	ros::NodeHandle nh("~/" + name_), g_nh;
+	client_ = g_nh.serviceClient<nav_msgs::GetMap>("costmap_server");
+	ROS_INFO("Activating Learned Layer");
+
+	was_enabled_ = false;
 	current_ = true;
-	default_value_ = 100;
+	default_value_ = NO_INFORMATION;
 	matchSize();
 
 	dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
@@ -28,15 +30,27 @@ void LearnedLayer::onInitialize()
 	dsrv_->setCallback(cb);
 
 	load();
-
-	// setCost(2269, 1985, LETHAL_OBSTACLE);
-
 }
 
-void LearnedLayer::load() {
-	
-}
+void LearnedLayer::load() 
+{
+	nav_msgs::GetMap srv_;
 
+	client_.waitForExistence();
+	if (client_.call(srv_)) {
+		std::cout << srv_.response.map.info;
+	}
+	else {
+
+		ROS_ERROR("SERVICE CALL FAILED");
+		exit(1);
+	}
+
+	for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
+	{
+		costmap_[i] = (100 - srv_.response.map.data[i]) / 2;
+	}
+}
 
 void LearnedLayer::matchSize()
 {
@@ -54,33 +68,21 @@ void LearnedLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32
 void LearnedLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,
 									double* min_y, double* max_x, double* max_y)
 {
-	if (!enabled_)
+	if (enabled_ == was_enabled_) {
 		return;
+	}
+	else {
+		double wx, wy;
 
-	unsigned int mx, my;
+		mapToWorld(0, 0, wx, wy);
+		*min_x = wx;
+		*min_y = wy;
 
+		mapToWorld(getSizeInCellsX(), getSizeInCellsY(), wx, wy);
+		*max_x = wx;
+		*max_y = wy;
 
-
-	*min_x = std::min(*min_x, origin_x - 10);
-	*min_y = std::min(*min_y, origin_y - 10);
-	*max_x = std::max(*max_x, origin_x + 10);
-	*max_y = std::max(*max_y, origin_y + 10);
-
-
-
-	// if(worldToMap(origin_x, origin_y, mx, my)){
-	// 	// setCost(mx, my, 0);
-	// 	for(int i = mx - 2; i <= mx + 2; i++) {
-	// 		for(int j = my - 2; j <= my + 2; j++) {
-	// 			setCost(i, j, 0);
-	// 		}
-	// 	}
-	// }
-
-	// *min_x = std::min(*min_x, origin_x);
-	// *min_y = std::min(*min_y, origin_y);
-	// *max_x = std::max(*max_x, origin_x);
-	// *max_y = std::max(*max_y, origin_y);
+	}
 }
 
 void LearnedLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
@@ -88,19 +90,20 @@ void LearnedLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, in
 {
 
 
-	if (!enabled_)
-		return;
-
-	for (int j = min_j; j < max_j; j++)
-	{
-		for (int i = min_i; i < max_i; i++)
+	if (enabled_) {
+		for (int j = min_j; j < max_j; j++)
 		{
-			int index = getIndex(i, j);
-			if (master_grid.getCost(i, j) >= 100)
-				continue;
-			master_grid.setCost(i, j, costmap_[index]);
+			for (int i = min_i; i < max_i; i++)
+			{
+				int index = getIndex(i, j);
+				if (master_grid.getCost(i, j) >= 50)
+					continue;
+				master_grid.setCost(i, j, costmap_[index]);
+			}
 		}
 	}
+
+	was_enabled_ = enabled_;
 }
 
 } // end namespace

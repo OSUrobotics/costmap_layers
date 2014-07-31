@@ -80,7 +80,7 @@ class PathAnalyzer():
 				i2 = int((path.poses[ind + 1].position.x - origin.x) / resolution)
 				j2 = int((path.poses[ind + 1].position.y - origin.y) / resolution)
 
-				cv2.line(self.cost_img, (i1, j1), (i2, j2), 255)
+				cv2.line(self.cost_img, (i1, j1), (i2, j2), 100)
 
 
 		# show_image(cv2.resize(self.cost_img, (800, 800)))
@@ -102,7 +102,10 @@ class PathAnalyzer():
 		costmap = OccupancyGrid()
 		costmap.header = self.map_header
 		costmap.info = self.map_metadata
-		data = list(self.cost_img.flatten())
+		data = self.cost_img.flatten()
+		print data
+		data = list(data)
+		print data[0]
 		costmap.data = data
 
 		return costmap
@@ -122,6 +125,6 @@ if __name__ == '__main__':
 	p.convert()
 	p.process()
 
-	s = rospy.Service('costmap_serve', GetMap, p.costmap_serve)
+	s = rospy.Service('costmap_server', GetMap, p.costmap_serve)
 	rospy.loginfo("Service /costmap_serve ready.")
 	rospy.spin()
