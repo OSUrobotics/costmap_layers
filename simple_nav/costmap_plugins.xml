@@ -19,7 +19,7 @@
       <description>Leaves a breadcrumb trail of preferable cost behind the robot</description>
     </class>
   </library>
-  <library path="../../devel/liblearned_layer">
+  <library path="../../devel/lib/liblearned_layer">
     <class type="simple_layer_namespace::LearnedLayer" base_class_type="costmap_2d::Layer">
       <description>Learned from previous data collection where robot prefers to go</description>
     </class>
