@@ -2,8 +2,7 @@
 
   <!-- Run in learned layer mode unless in collect mode -->
   <arg name="collect" default="false" />
-  <arg name="bagfile" default="2014-07-24_14-53-24_path_data.bag" />
-  <node pkg="simple_nav" type="analyze_path.py" name="costmap_server" args="$(arg bagfile)" output="screen" unless="$(arg collect)" /> 
+  <node pkg="simple_nav" type="analyze_path.py" name="costmap_server" output="screen" unless="$(arg collect)" /> 
   <node pkg="simple_nav" type="path_collect.py" name="path_collector" output="screen" if="$(arg collect)" /> 
 
   <node pkg="amcl" type="amcl" name="localizer" output="screen">

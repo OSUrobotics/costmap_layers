@@ -1,6 +1,6 @@
 <launch>
 
-  <arg name="world_file" value="$(find simple_nav)/world/simple.world"/>
+  <arg name="world_file" default="$(find simple_nav)/world/simple.world"/>
   <node pkg="stage_ros" type="stageros" name="simulator" output="screen" args="$(arg world_file)"/>
 
   <arg name="map_file" value="$(find simple_nav)/map/simple_map.yaml"/>

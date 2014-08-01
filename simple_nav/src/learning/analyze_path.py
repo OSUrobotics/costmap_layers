@@ -16,6 +16,8 @@ import rospkg
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import sys
+import argparse
 
 
 
@@ -25,9 +27,9 @@ class PathAnalyzer():
 		rospy.init_node('analyze_path')
 
 
-	def load(self):
+	def load(self, bag_path):
 		"""Load saved data from bag file
-		args: none
+		args: bag_path
 		Pre: 
 			- Bag File must exist
 		Post:
@@ -35,8 +37,8 @@ class PathAnalyzer():
 			- self.paths is a list containing one PoseArray
 				for each path recorded
 		"""
-		package 			= rospkg.RosPack()
-		bag_path  			= package.get_path('simple_nav') + "/bags/" + "2014-07-24_14-53-24_path_data.bag"
+		# package 			= rospkg.RosPack()
+		# bag_path  			= package.get_path('simple_nav') + "/bags/" + "2014-07-24_14-53-24_path_data.bag"
 		bag 				= rosbag.Bag(bag_path)
 
 		for topic, msg, t in bag.read_messages(topics=['map_metadata']):
@@ -86,16 +88,10 @@ class PathAnalyzer():
 		# show_image(cv2.resize(self.cost_img, (800, 800)))
 
 
-	def connect(self):
-		pass
-
-
 	def process(self):
 		el = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
 		self.cost_img = cv2.dilate(self.cost_img, el)
 		self.cost_img = cv2.GaussianBlur(self.cost_img, (15, 15), 0)
-		# show_image(cv2.resize(self.cost_img, (800, 800)))
-		# show_image(self.cost_img[1500:2500, 2000:3000])
 
 
 	def costmap_serve(self, req):
@@ -103,9 +99,8 @@ class PathAnalyzer():
 		costmap.header = self.map_header
 		costmap.info = self.map_metadata
 		data = self.cost_img.flatten()
-		print data
+		rospy.loginfo("Sent Costmap")
 		data = list(data)
-		print data[0]
 		costmap.data = data
 
 		return costmap
@@ -118,13 +113,32 @@ def show_image(img):
 	cv2.destroyAllWindows()
 
 
+def parse(argv):
+	parser = argparse.ArgumentParser(description="A node that analyzes a bag file of robot paths into a costmap-readable format.")
+	parser.add_argument('bagfile')
+	parser.add_argument('launch_crap', nargs=argparse.REMAINDER)
+	parsed_args = parser.parse_args(argv)
 
-if __name__ == '__main__':
+	if '/' not in parsed_args.bagfile:
+		package = rospkg.RosPack()
+		bag_path  = package.get_path('simple_nav') + "/bags/" + parsed_args.bagfile
+	else:
+		bag_path = parsed_args.bagfile
+
+	return bag_path
+
+
+def main(argv):
+	
 	p = PathAnalyzer()
-	p.load()
+	p.load(parse(argv))
 	p.convert()
 	p.process()
 
 	s = rospy.Service('costmap_server', GetMap, p.costmap_serve)
 	rospy.loginfo("Service /costmap_serve ready.")
 	rospy.spin()
+
+
+if __name__ == '__main__':
+	main(sys.argv[1:])
