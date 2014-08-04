@@ -15,6 +15,7 @@ import rospkg
 # External Libraries
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry import LineString, Point as sPoint
 import cv2
 import sys
 import argparse
@@ -37,8 +38,6 @@ class PathAnalyzer():
 			- self.paths is a list containing one PoseArray
 				for each path recorded
 		"""
-		# package 			= rospkg.RosPack()
-		# bag_path  			= package.get_path('simple_nav') + "/bags/" + "2014-07-24_14-53-24_path_data.bag"
 		bag 				= rosbag.Bag(bag_path)
 
 		for topic, msg, t in bag.read_messages(topics=['map_metadata']):
@@ -59,6 +58,22 @@ class PathAnalyzer():
 			# print "------\n"
 
 		bag.close()
+
+
+	def make_line_strings(self):
+		self.line_strings = []
+		for path in self.paths:
+			line_list = []
+			for pose in path.poses:
+				line_list.append((pose.position.x, pose.position.y))
+
+			self.line_strings.append(LineString(line_list))
+
+
+	def calc_min_distances(self):
+		pt = sPoint(19, 0)
+		for path in self.line_strings:
+			print path.distance(pt)
 
 
 	def convert(self):
@@ -94,16 +109,22 @@ class PathAnalyzer():
 		self.cost_img = cv2.GaussianBlur(self.cost_img, (15, 15), 0)
 
 
-	def costmap_serve(self, req):
-		costmap = OccupancyGrid()
-		costmap.header = self.map_header
-		costmap.info = self.map_metadata
+	def costmap_serve(self):
+		self.costmap = OccupancyGrid()
+		self.costmap.header = self.map_header
+		self.costmap.info = self.map_metadata
 		data = self.cost_img.flatten()
-		rospy.loginfo("Sent Costmap")
 		data = list(data)
-		costmap.data = data
+		self.costmap.data = data
+		
+		s = rospy.Service('costmap_server', GetMap, self.costmap_callback)
+		rospy.loginfo("Service /costmap_serve ready.")
+		rospy.spin()
 
-		return costmap
+
+	def costmap_callback(self, req):
+		rospy.loginfo("Sending Costmap...")
+		return self.costmap
 
 
 
@@ -132,12 +153,11 @@ def main(argv):
 	
 	p = PathAnalyzer()
 	p.load(parse(argv))
-	p.convert()
-	p.process()
-
-	s = rospy.Service('costmap_server', GetMap, p.costmap_serve)
-	rospy.loginfo("Service /costmap_serve ready.")
-	rospy.spin()
+	p.make_line_strings()
+	p.calc_min_distances()
+	# p.convert()
+	# p.process()
+	# p.costmap_serve()
 
 
 if __name__ == '__main__':

@@ -58,6 +58,7 @@
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>opencv2</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>SymPy</run_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->
