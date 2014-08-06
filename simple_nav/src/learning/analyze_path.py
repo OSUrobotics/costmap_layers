@@ -35,16 +35,14 @@ class PathAnalyzer():
 			- Bag File must exist
 		Post:
 			- self.map_metadata describes map
+			- self.map_header is the old map header
 			- self.paths is a list containing one PoseArray
 				for each path recorded
 		"""
 		bag 				= rosbag.Bag(bag_path)
 
 		for topic, msg, t in bag.read_messages(topics=['map_metadata']):
-			# print topic
-			# print msg
 			self.map_metadata 	= msg
-			# print "\n\n"
 
 		for topic, msg, t in bag.read_messages(topics=['map_header']):
 			self.map_header 	= msg
@@ -52,61 +50,62 @@ class PathAnalyzer():
 		self.paths 			= []
 
 		for topic, msg, t in bag.read_messages(topics=['path']):
-			# print topic
-			# print msg.header
 			self.paths.append(msg)
-			# print "------\n"
 
 		bag.close()
 
 
-	def make_line_strings(self):
-		self.line_strings = []
+	def _convert(self):
+		"""Convert loaded data from ROS messages into class variables:
+			- paths from PoseArray to LineString (shapely)
+			- map_metadata into:
+				- a height x width x len(paths) array of distances
+					- init'd to 0.0s
+				- origin
+				- resolution
+		"""
+		line_strings = []
 		for path in self.paths:
 			line_list = []
 			for pose in path.poses:
 				line_list.append((pose.position.x, pose.position.y))
 
-			self.line_strings.append(LineString(line_list))
+			line_strings.append(LineString(line_list))
 
+		self.paths = line_strings
 
-	def calc_min_distances(self):
-		pt = sPoint(19, 0)
-		for path in self.line_strings:
-			print path.distance(pt)
+		self.origin			= self.map_metadata.origin.position
+		self.resolution		= self.map_metadata.resolution
+		self.width 			= self.map_metadata.width
+		self.height			= self.map_metadata.height
+		
 
-
-	def convert(self):
-		"""Store loaded data in an image representing a costmap
-		args: none
-		Pre:
-			- must be called after load()
-		Post:
-			- all points visited by robot have been marked with a 255 in cost_img
-		"""
-		origin 			= self.map_metadata.origin.position
-		resolution		= self.map_metadata.resolution
-		width 			= self.map_metadata.width
-		height 			= self.map_metadata.height
-		self.cost_img	= np.zeros((height, width), dtype=np.uint8)
-
+	def _distance(self):
+		self.distances = np.empty((self.height, self.width))
+		self.distances.fill(2)
 		for path in self.paths:
-			for ind in range(len(path.poses) - 1):
-				i1 = int((path.poses[ind].position.x - origin.x) / resolution)
-				j1 = int((path.poses[ind].position.y - origin.y) / resolution)
-				i2 = int((path.poses[ind + 1].position.x - origin.x) / resolution)
-				j2 = int((path.poses[ind + 1].position.y - origin.y) / resolution)
+			min_x, min_y, max_x, max_y = path.bounds
+			min_x -=1; min_y -= 2
+			max_x += 1; max_y += 2
+			print min_x, min_y, max_x, max_y
+			for x in np.arange(min_x, max_x, self.resolution):
+				for y in np.arange(min_y, max_y, self.resolution):
+					i, j = self._world_to_map(x, y)
+					pt = sPoint(x, y)
+					self.distances[i, j] = path.distance(pt)
 
-				cv2.line(self.cost_img, (i1, j1), (i2, j2), 100)
 
 
-		# show_image(cv2.resize(self.cost_img, (800, 800)))
+	def _world_to_map(self, x, y):
+		i = int((x - self.origin.x) / self.resolution)
+		j = int((y - self.origin.y) / self.resolution)
+		return i, j
 
 
 	def process(self):
-		el = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-		self.cost_img = cv2.dilate(self.cost_img, el)
-		self.cost_img = cv2.GaussianBlur(self.cost_img, (15, 15), 0)
+		self._convert()
+		self._distance()
+		print np.min(self.distances)
 
 
 	def costmap_serve(self):
@@ -117,12 +116,12 @@ class PathAnalyzer():
 		data = list(data)
 		self.costmap.data = data
 		
-		s = rospy.Service('costmap_server', GetMap, self.costmap_callback)
+		s = rospy.Service('costmap_server', GetMap, self.costmap_request)
 		rospy.loginfo("Service /costmap_serve ready.")
 		rospy.spin()
 
 
-	def costmap_callback(self, req):
+	def costmap_request(self, req):
 		rospy.loginfo("Sending Costmap...")
 		return self.costmap
 
@@ -153,10 +152,7 @@ def main(argv):
 	
 	p = PathAnalyzer()
 	p.load(parse(argv))
-	p.make_line_strings()
-	p.calc_min_distances()
-	# p.convert()
-	# p.process()
+	p.process()
 	# p.costmap_serve()
 
 
