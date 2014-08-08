@@ -48,7 +48,7 @@ void LearnedLayer::load()
 
 	for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
 	{
-		costmap_[i] = (100 - srv_.response.map.data[i]) / 2;
+		costmap_[i] = (srv_.response.map.data[i]);
 	}
 }
 

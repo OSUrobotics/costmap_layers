@@ -73,7 +73,7 @@ class PathRecorder():
 
 		# ROS Bag for saving map and path data
 		package 				= rospkg.RosPack()
-		bags_folder 			= package.get_path('simple_nav') + '/bags/'
+		bags_folder 			= package.get_path('simple_nav') + '/bags/paths/'
 		bag_name				= time.strftime("%Y-%m-%d_%H-%M-%S_path_data.bag")
 		self.bag 				= rosbag.Bag(bags_folder + bag_name, 'w')
 		self.bag.write("map_header", self.map_header)

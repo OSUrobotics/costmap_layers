@@ -17,7 +17,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from shapely.geometry import LineString, Point as sPoint
 import cv2
-import sys
+import sys, time
 import argparse
 
 
@@ -55,15 +55,7 @@ class PathAnalyzer():
 		bag.close()
 
 
-	def _convert(self):
-		"""Convert loaded data from ROS messages into class variables:
-			- paths from PoseArray to LineString (shapely)
-			- map_metadata into:
-				- a height x width x len(paths) array of distances
-					- init'd to 0.0s
-				- origin
-				- resolution
-		"""
+	def _msg_to_paths(self):
 		line_strings = []
 		for path in self.paths:
 			line_list = []
@@ -80,45 +72,72 @@ class PathAnalyzer():
 		self.height			= self.map_metadata.height
 		
 
-	def _distance(self):
-		self.distances = np.empty((self.height, self.width))
-		self.distances.fill(2)
+	def _paths_to_cost(self):
+		self.cost_grid = np.ones((self.height, self.width))
 		for path in self.paths:
+			distances = np.empty((self.height, self.width))
+			distances.fill(np.inf)
+
 			min_x, min_y, max_x, max_y = path.bounds
-			min_x -=1; min_y -= 2
-			max_x += 1; max_y += 2
+			faraway = 5
+			min_x -= faraway; min_y -= faraway
+			max_x += faraway; max_y += faraway
 			print min_x, min_y, max_x, max_y
 			for x in np.arange(min_x, max_x, self.resolution):
 				for y in np.arange(min_y, max_y, self.resolution):
 					i, j = self._world_to_map(x, y)
 					pt = sPoint(x, y)
-					self.distances[i, j] = path.distance(pt)
+					distances[i, j] = path.distance(pt)
 
+			# self._distances_to_cost(distances)
+			self.cost_grid *= np.tanh(distances * (3.0 / faraway))
 
 
 	def _world_to_map(self, x, y):
-		i = int((x - self.origin.x) / self.resolution)
-		j = int((y - self.origin.y) / self.resolution)
+		j = int((x - self.origin.x) / self.resolution)
+		i = int((y - self.origin.y) / self.resolution)
 		return i, j
 
 
 	def process(self):
-		self._convert()
-		self._distance()
-		print np.min(self.distances)
+		self._msg_to_paths()
+		self._paths_to_cost()
+
+		show_image(self.cost_grid)
+
+		self.cost_grid *= 50
+		self.cost_grid = self.cost_grid.astype(np.uint8)
+		
+		# show_image(self.cost_grid)
 
 
 	def costmap_serve(self):
 		self.costmap = OccupancyGrid()
 		self.costmap.header = self.map_header
 		self.costmap.info = self.map_metadata
-		data = self.cost_img.flatten()
+		data = self.cost_grid.flatten()
 		data = list(data)
 		self.costmap.data = data
 		
 		s = rospy.Service('costmap_server', GetMap, self.costmap_request)
 		rospy.loginfo("Service /costmap_serve ready.")
 		rospy.spin()
+
+
+	def save(self):
+		costmap = OccupancyGrid()
+		costmap.header = self.map_header
+		costmap.info = self.map_metadata
+		data = self.cost_grid.flatten()
+		data = list(data)
+		costmap.data = data
+
+		package 				= rospkg.RosPack()
+		bags_folder 			= package.get_path('simple_nav') + '/bags/costmaps/'
+		bag_name				= time.strftime("%Y-%m-%d_%H-%M-%S_costmap.bag")
+		bag 					= rosbag.Bag(bags_folder + bag_name, 'w')
+		bag.write("costmap", costmap)
+		bag.close()
 
 
 	def costmap_request(self, req):
@@ -128,9 +147,10 @@ class PathAnalyzer():
 
 
 def show_image(img):
-	cv2.imshow("cost_img", img)
-	cv2.waitKey(0)
-	cv2.destroyAllWindows()
+	im = plt.imshow(img)
+	im.set_cmap('binary')
+	plt.colorbar()
+	plt.show()
 
 
 def parse(argv):
@@ -141,7 +161,7 @@ def parse(argv):
 
 	if '/' not in parsed_args.bagfile:
 		package = rospkg.RosPack()
-		bag_path  = package.get_path('simple_nav') + "/bags/" + parsed_args.bagfile
+		bag_path  = package.get_path('simple_nav') + "/bags/paths/" + parsed_args.bagfile
 	else:
 		bag_path = parsed_args.bagfile
 
@@ -153,7 +173,7 @@ def main(argv):
 	p = PathAnalyzer()
 	p.load(parse(argv))
 	p.process()
-	# p.costmap_serve()
+	p.save()
 
 
 if __name__ == '__main__':
