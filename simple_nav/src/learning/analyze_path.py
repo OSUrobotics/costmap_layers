@@ -103,7 +103,7 @@ class PathAnalyzer():
 		self._msg_to_paths()
 		self._paths_to_cost()
 
-		show_image(self.cost_grid)
+		# show_image(self.cost_grid)
 
 		self.cost_grid *= 50
 		self.cost_grid = self.cost_grid.astype(np.uint8)
@@ -138,6 +138,9 @@ class PathAnalyzer():
 		bag 					= rosbag.Bag(bags_folder + bag_name, 'w')
 		bag.write("costmap", costmap)
 		bag.close()
+
+		info = "Costmap saved to " + bags_folder + bag_name
+		rospy.loginfo(info)
 
 
 	def costmap_request(self, req):

@@ -5,7 +5,10 @@
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/GenericPluginConfig.h>
 #include <dynamic_reconfigure/server.h>
-#include "nav_msgs/GetMap.h"
+#include <rosbag/bag.h>
+#include <rosbag/view.h>
+#include "nav_msgs/OccupancyGrid.h"
+#include <string>
 
 namespace simple_layer_namespace
 {
@@ -44,7 +47,7 @@ namespace simple_layer_namespace
 
 		dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
 
-		ros::ServiceClient client_;
+		std::string costmap_path_;
 
 		bool was_enabled_;
 	};

@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 	pluginlib
   std_srvs
   message_generation
+  rosbag
   # opencv2 REQUIRED
 )
 
@@ -134,9 +135,9 @@ add_library(learned_layer
 # target_link_libraries(tracking_layer
 #    ${opencv2_LIBS}
 # )
-# target_link_libraries(breadcrumb_layer
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(learned_layer
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##

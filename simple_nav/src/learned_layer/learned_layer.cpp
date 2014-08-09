@@ -1,6 +1,9 @@
 #include "learned_layer.h"
 #include <pluginlib/class_list_macros.h>
 #include <iostream>
+#include <vector>
+#include <boost/foreach.hpp>
+
 
 
 PLUGINLIB_EXPORT_CLASS(simple_layer_namespace::LearnedLayer, costmap_2d::Layer)
@@ -16,8 +19,12 @@ LearnedLayer::LearnedLayer() {}
 void LearnedLayer::onInitialize()
 {
 	ros::NodeHandle nh("~/" + name_), g_nh;
-	client_ = g_nh.serviceClient<nav_msgs::GetMap>("costmap_server");
-	ROS_INFO("Activating Learned Layer");
+	if (! g_nh.hasParam("costmap_file")) {
+		std::cout << name_;
+		ROS_ERROR("Ain't got no param");
+	}
+	g_nh.getParam("costmap_file", costmap_path_);
+	ROS_INFO("Activating Learned Layer with file %s", costmap_path_.c_str());
 
 	was_enabled_ = false;
 	current_ = true;
@@ -34,22 +41,49 @@ void LearnedLayer::onInitialize()
 
 void LearnedLayer::load() 
 {
-	nav_msgs::GetMap srv_;
+	rosbag::Bag bag;
 
-	client_.waitForExistence();
-	if (client_.call(srv_)) {
-		std::cout << srv_.response.map.info;
-	}
-	else {
+	bag.open(costmap_path_, rosbag::bagmode::Read);
 
-		ROS_ERROR("SERVICE CALL FAILED");
-		exit(1);
-	}
+	std::vector<std::string> topics;
+    topics.push_back(std::string("costmap"));
 
-	for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
+    rosbag::View view(bag, rosbag::TopicQuery(topics));
+
+    nav_msgs::OccupancyGrid::ConstPtr map_grid;
+
+    BOOST_FOREACH(rosbag::MessageInstance const m, view)
+    {
+        map_grid = m.instantiate<nav_msgs::OccupancyGrid>();
+        if (map_grid == NULL) {
+            ROS_ERROR("Failed to read bag file");
+        }
+
+    }
+
+    for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
 	{
-		costmap_[i] = (srv_.response.map.data[i]);
+		costmap_[i] = (map_grid->data[i]);
 	}
+
+    bag.close();
+
+	// nav_msgs::GetMap srv_;
+
+	// client_.waitForExistence();
+	// if (client_.call(srv_)) {
+	// 	std::cout << srv_.response.map.info;
+	// }
+	// else {
+
+	// 	ROS_ERROR("SERVICE CALL FAILED");
+	// 	exit(1);
+	// }
+
+	// for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
+	// {
+	// 	costmap_[i] = (srv_.response.map.data[i]);
+	// }
 }
 
 void LearnedLayer::matchSize()
@@ -63,6 +97,7 @@ void LearnedLayer::matchSize()
 void LearnedLayer::reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level)
 {
 	enabled_ = config.enabled;
+
 }
 
 void LearnedLayer::updateBounds(double origin_x, double origin_y, double origin_yaw, double* min_x,

@@ -2,8 +2,8 @@
 
   <!-- Run in learned layer mode unless in collect mode -->
   <arg name="collect" default="false" />
-  <arg name="bagfile" default="2014-07-24_14-53-24_path_data.bag" />
-  <node pkg="simple_nav" type="analyze_path.py" name="costmap_server" args="$(arg bagfile)" output="screen" unless="$(arg collect)" /> 
+  <!-- <arg name="bagfile" default="2014-07-24_14-53-24_path_data.bag" /> -->
+  <!-- <node pkg="simple_nav" type="analyze_path.py" name="costmap_server" args="$(arg bagfile)" output="screen" unless="$(arg collect)" />  -->
   <node pkg="simple_nav" type="path_collect.py" name="path_collector" output="screen" if="$(arg collect)" /> 
 
   <node pkg="amcl" type="amcl" name="localizer" output="screen">
@@ -11,6 +11,8 @@
   </node>
 
   <rosparam command="delete" ns="mover" />
+  <arg name="costmap_file" default="$(find simple_nav)/bags/costmaps/costmap_example.bag" />
+  <param name="costmap_file" value="$(arg costmap_file)" unless="$(arg collect)" />
   <node pkg="move_base" type="move_base" respawn="false" name="mover" output="screen">
     <rosparam file="$(find simple_nav)/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />
     <rosparam file="$(find simple_nav)/launch/costmap_common_params.yaml" command="load" ns="local_costmap" />
