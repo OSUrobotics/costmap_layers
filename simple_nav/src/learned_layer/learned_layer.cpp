@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/foreach.hpp>
+#include <math.h>
 
 
 
@@ -21,14 +22,16 @@ void LearnedLayer::onInitialize()
 	ros::NodeHandle nh("~/" + name_), g_nh;
 	if (! g_nh.hasParam("costmap_file")) {
 		std::cout << name_;
-		ROS_ERROR("Ain't got no param");
+		ROS_ERROR("Couldn't find param /costmap_file");
+		exit(1);
 	}
 	g_nh.getParam("costmap_file", costmap_path_);
 	ROS_INFO("Activating Learned Layer with file %s", costmap_path_.c_str());
 
 	was_enabled_ = false;
 	current_ = true;
-	default_value_ = NO_INFORMATION;
+	// because GridCells messages are restricted to [0, 100]
+	default_value_ = 100;
 	matchSize();
 
 	dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
@@ -63,27 +66,13 @@ void LearnedLayer::load()
 
     for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
 	{
-		costmap_[i] = (map_grid->data[i]);
+		double c = (100 - map_grid->data[i])/ 100.0;
+		c = pow(0.1, c);
+		unsigned char cost = (100 * c);
+		costmap_[i] = cost;
 	}
 
     bag.close();
-
-	// nav_msgs::GetMap srv_;
-
-	// client_.waitForExistence();
-	// if (client_.call(srv_)) {
-	// 	std::cout << srv_.response.map.info;
-	// }
-	// else {
-
-	// 	ROS_ERROR("SERVICE CALL FAILED");
-	// 	exit(1);
-	// }
-
-	// for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
-	// {
-	// 	costmap_[i] = (srv_.response.map.data[i]);
-	// }
 }
 
 void LearnedLayer::matchSize()
@@ -123,19 +112,19 @@ void LearnedLayer::updateBounds(double origin_x, double origin_y, double origin_
 void LearnedLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i,
 																					int max_j)
 {
-
-
 	if (enabled_) {
-		for (int j = min_j; j < max_j; j++)
-		{
-			for (int i = min_i; i < max_i; i++)
-			{
-				int index = getIndex(i, j);
-				if (master_grid.getCost(i, j) >= 50)
-					continue;
-				master_grid.setCost(i, j, costmap_[index]);
-			}
-		}
+		// for (int j = min_j; j < max_j; j++)
+		// {
+		// 	for (int i = min_i; i < max_i; i++)
+		// 	{
+		// 		int index = getIndex(i, j);
+		// 		int cost = master_grid.getCost(i, j); 
+		// 		if (cost >= 50)
+		// 			continue;
+		// 		master_grid.setCost(i, j, costmap_[index]);
+		// 	}
+		// }
+		updateWithMax(master_grid, min_i, min_j, max_i, max_j);
 	}
 
 	was_enabled_ = enabled_;

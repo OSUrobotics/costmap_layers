@@ -11,7 +11,7 @@
   </node>
 
   <rosparam command="delete" ns="mover" />
-  <arg name="costmap_file" default="$(find simple_nav)/bags/costmaps/costmap_example.bag" />
+  <arg name="costmap_file" default="$(find simple_nav)/bags/costmaps/example.bag" />
   <param name="costmap_file" value="$(arg costmap_file)" unless="$(arg collect)" />
   <node pkg="move_base" type="move_base" respawn="false" name="mover" output="screen">
     <rosparam file="$(find simple_nav)/launch/costmap_common_params.yaml" command="load" ns="global_costmap" />

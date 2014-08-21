@@ -142,6 +142,8 @@ class PathAnalyzer():
 
 			self.cost_grid *= np.tanh(distances * (3.0 / faraway))
 
+		# self.cost_grid = 0.5 ** self.cost_grid 
+
 
 	def _world_to_map(self, x, y):
 		j = int((x - self.origin.x) / self.resolution)
@@ -156,9 +158,9 @@ class PathAnalyzer():
 
 		self._paths_to_cost()
 
-		# show_image(self.cost_grid)
+		show_image(self.cost_grid)
 
-		self.cost_grid *= 50
+		self.cost_grid *= 100
 		self.cost_grid = self.cost_grid.astype(np.uint8)
 		
 		# show_image(self.cost_grid)
