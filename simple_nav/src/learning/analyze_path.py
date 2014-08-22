@@ -141,8 +141,16 @@ class PathAnalyzer():
 					distances[i, j] = path.distance(pt)
 
 			self.cost_grid *= np.tanh(distances * (3.0 / faraway))
+			
 
-		# self.cost_grid = 0.5 ** self.cost_grid 
+			## TRIALS 
+			# MULT
+			# self.cost_grid *= 1 - (0.1 ** distances)
+			# ADD
+			# self.cost_grid *= 1 - (0.9 * distances)
+
+
+			# self.cost_grid *= 0.5 ** (1 - distances) 
 
 
 	def _world_to_map(self, x, y):
@@ -203,7 +211,7 @@ def main(argv):
 	
 	p = PathAnalyzer(parse(argv))
 	p.process()
-	p.save()
+	# p.save()
 
 
 if __name__ == '__main__':

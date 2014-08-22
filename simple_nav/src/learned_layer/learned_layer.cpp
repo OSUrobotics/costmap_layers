@@ -67,8 +67,9 @@ void LearnedLayer::load()
     for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
 	{
 		double c = (100 - map_grid->data[i])/ 100.0;
-		c = pow(0.1, c);
-		unsigned char cost = (100 * c);
+		// c = pow(0.1, c);
+		c = 1 - (0.9 * c);
+		unsigned char cost = 100 - (100 * c);
 		costmap_[i] = cost;
 	}
 
