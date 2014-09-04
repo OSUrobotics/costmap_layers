@@ -31,7 +31,7 @@ void LearnedLayer::onInitialize()
 	was_enabled_ = false;
 	current_ = true;
 	// because GridCells messages are restricted to [0, 100]
-	default_value_ = 100;
+	default_value_ = 50;
 	matchSize();
 
 	dsrv_ = new dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>(nh);
@@ -53,11 +53,11 @@ void LearnedLayer::load()
 
     rosbag::View view(bag, rosbag::TopicQuery(topics));
 
-    nav_msgs::OccupancyGrid::ConstPtr map_grid;
+    simple_nav::RealGrid::ConstPtr map_grid;
 
     BOOST_FOREACH(rosbag::MessageInstance const m, view)
     {
-        map_grid = m.instantiate<nav_msgs::OccupancyGrid>();
+        map_grid = m.instantiate<simple_nav::RealGrid>();
         if (map_grid == NULL) {
             ROS_ERROR("Failed to read bag file");
         }
@@ -66,10 +66,16 @@ void LearnedLayer::load()
 
     for (int i = 0; i < getSizeInCellsX() * getSizeInCellsY(); i++)
 	{
-		double c = (100 - map_grid->data[i])/ 100.0;
-		// c = pow(0.1, c);
-		c = 1 - (0.9 * c);
-		unsigned char cost = 100 - (100 * c);
+		double c = map_grid->data[i];
+		// *** Options
+		// // Multiplicative
+		c = pow(0.3, c);
+
+		// // Additive
+		// c = 1 - (0.5 * c);
+		// c = std::max(c, 0.01);
+
+		unsigned char cost = (default_value_ * c);
 		costmap_[i] = cost;
 	}
 

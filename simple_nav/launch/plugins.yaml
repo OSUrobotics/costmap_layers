@@ -1,7 +1,6 @@
 plugins: 
     - {name: static_layer, type: 'costmap_2d::StaticLayer'}
     - {name: obstacle_layer, type: 'costmap_2d::ObstacleLayer'}
-    # - {name: zone_layer, type: 'zone_layer_namespace::ZoneLayer'}
     - {name: inflation_layer, type: 'costmap_2d::InflationLayer'}
     # - {name: simple_layer, type: 'simple_layer_namespace::SimpleLayer'}
     # - {name: grid_layer, type: 'simple_layer_namespace::GridLayer'}

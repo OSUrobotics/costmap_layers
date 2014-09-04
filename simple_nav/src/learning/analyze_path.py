@@ -3,7 +3,7 @@
 # ROS data types
 from simple_nav.srv 		import ChangeState
 from nav_msgs.srv 			import GetMap
-from nav_msgs.msg 			import OccupancyGrid
+from simple_nav.msg			import RealGrid
 from nav_msgs.msg 			import Odometry
 from geometry_msgs.msg 		import PoseArray
 from geometry_msgs.msg 		import PoseStamped
@@ -85,7 +85,7 @@ class PathAnalyzer():
 
 
 	def _load_costmap(self):
-		self.cost_grid = np.ones((self.height, self.width))
+		self.cost_grid = np.zeros((self.height, self.width), dtype=np.float32)
 
 		if self.new_bag: return
 
@@ -98,8 +98,8 @@ class PathAnalyzer():
 
 		height = cost_grid.info.height
 		width = cost_grid.info.width
-		self.cost_grid = np.array(cost_grid.data).reshape((height, width)).astype(np.float)
-		self.cost_grid /= 50
+		self.cost_grid = np.array(cost_grid.data).reshape((height, width)).astype(np.float32)
+		# self.cost_grid /= 100
 
 
 	def _msg_to_paths(self):
@@ -133,24 +133,14 @@ class PathAnalyzer():
 			faraway = 5
 			min_x -= faraway; min_y -= faraway
 			max_x += faraway; max_y += faraway
-			print "\tPath bounding  box area: %fm by %fm" % ( abs(max_x - min_x), abs(max_y - min_y) )
+			print "\t\tPath bounding  box area: %fm by %fm" % ( abs(max_x - min_x), abs(max_y - min_y) )
 			for x in np.arange(min_x, max_x, self.resolution):
 				for y in np.arange(min_y, max_y, self.resolution):
 					i, j = self._world_to_map(x, y)
 					pt = sPoint(x, y)
 					distances[i, j] = path.distance(pt)
 
-			self.cost_grid *= np.tanh(distances * (3.0 / faraway))
-			
-
-			## TRIALS 
-			# MULT
-			# self.cost_grid *= 1 - (0.1 ** distances)
-			# ADD
-			# self.cost_grid *= 1 - (0.9 * distances)
-
-
-			# self.cost_grid *= 0.5 ** (1 - distances) 
+			self.cost_grid += np.exp(-(distances ** 2))
 
 
 	def _world_to_map(self, x, y):
@@ -166,16 +156,16 @@ class PathAnalyzer():
 
 		self._paths_to_cost()
 
-		show_image(self.cost_grid)
+		# show_image(self.cost_grid)
 
-		self.cost_grid *= 100
-		self.cost_grid = self.cost_grid.astype(np.uint8)
+		# self.cost_grid *= 100
+		# self.cost_grid = self.cost_grid.astype(np.uint8)
 		
 		# show_image(self.cost_grid)
 
 
 	def save(self):
-		costmap = OccupancyGrid()
+		costmap = RealGrid()
 		costmap.header = self.map_header
 		costmap.info = self.map_metadata
 		data = self.cost_grid.flatten()
@@ -211,7 +201,7 @@ def main(argv):
 	
 	p = PathAnalyzer(parse(argv))
 	p.process()
-	# p.save()
+	p.save()
 
 
 if __name__ == '__main__':

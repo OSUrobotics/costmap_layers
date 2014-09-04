@@ -7,7 +7,7 @@
 #include <dynamic_reconfigure/server.h>
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
-#include "nav_msgs/OccupancyGrid.h"
+#include "simple_nav/RealGrid.h"
 #include <string>
 
 namespace simple_layer_namespace
