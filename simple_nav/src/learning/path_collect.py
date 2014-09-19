@@ -3,7 +3,6 @@
 # ROS data types
 from simple_nav.srv import ChangeState
 from nav_msgs.srv import GetMap
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseArray
 from geometry_msgs.msg import PoseStamped
 # ROS Libraries
@@ -19,7 +18,7 @@ import time
 
 class PathRecorder():
 	"""Service to record a robot's paths to a bag"""
-	def __init__(self):
+	def __init__(self, topic):
  
 		# Start Node
 		rospy.init_node('path_recorder')
@@ -34,7 +33,7 @@ class PathRecorder():
 		self.transformer 		= tf.TransformListener()
 
 		# Subscribe to robot position via /odom
-		self.position_sub 		= rospy.Subscriber("odom", Odometry, self.position_callback)
+		self.position_sub 		= rospy.Subscriber(topic, PoseStamped, self.position_callback)
 
 		# User guidance
 		rospy.loginfo("Run 'rosservice call /record_path \"\" ' to start/stop recording a path.")
@@ -149,7 +148,7 @@ class PathRecorder():
 		self.state = 'OFF'
 
 
-	def position_callback(self, odom):
+	def position_callback(self, pose):
 		if self.state 		== 'INIT' :
 			pass
 
@@ -160,10 +159,6 @@ class PathRecorder():
 			pass
 
 		elif self.state 	== 'RECORDING':
-			# create a stamped pose to transform
-			pose				= PoseStamped()
-			pose.header 		= odom.header
-			pose.pose 			= odom.pose.pose
 			# transform pose
 			self.transformer.waitForTransform(pose.header.frame_id, 
 				self.map_header.frame_id, 
@@ -180,4 +175,4 @@ class PathRecorder():
 
 
 if __name__ == "__main__":
-	PathRecorder()
+	PathRecorder("TOPIC_GOES_HERE")
